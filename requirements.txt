@@ -1,0 +1,9 @@
+curl_cffi
+PyExecJS
+lxml
+redis
+Flask
+gunicorn
+werkzeug
+APScheduler
+click

@@ -1,0 +1,21 @@
+version: "2"
+services:
+  proxy_redis:
+    image: "redis"
+    container_name: proxy_redis
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    command: redis-server --appendonly yes
+
+  bpproxypool:
+    image: "ghcr.io/jungheil/bpproxypool:latest"
+    container_name: bpproxypool
+    ports:
+      - "5010:5010"
+    links:
+      - proxy_redis
+    environment:
+      PPCMD: launch
+      DB_CONN: "redis://@proxy_redis:6379/0"
+    restart: unless-stopped
