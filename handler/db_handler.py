@@ -1,12 +1,12 @@
-from config import db_config
+from config import config
 from db.dbClient import DbClient
 from helper.proxy import Proxy
 
 
 class DBHandler:
     def __init__(self):
-        self.db = DbClient(db_config["db_conn"])
-        self.db.change_table(db_config["table_name"])
+        self.db = DbClient(config.db_config["db_conn"])
+        self.db.change_table(config.db_config["table_name"])
 
     def get(self, protocol=[]):
         proxy = self.db.get(protocol)

@@ -9,8 +9,8 @@
 <a href="https://github.com/jungheil/bpproxypool/actions/workflows/build_docker_image.yml"><img src ='https://img.shields.io/github/actions/workflow/status/jungheil/bpproxypool/build_docker_image.yml?label=Build' title="Build"></a>
 </p>
 
-     ____  ____  ____                      ____             _
-    | __ )|  _ \|  _ \ _ __ _____  ___   _|  _ \ ___   ___ | |
+    ____  ____  ____                      ____             _
+    | __ )|  _\|  _ \ _ __ _____  ___   _|  _ \ ___   ___ | |
     |  _ \| |_) | |_) | '__/ _ \ \/ / | | | |_) / _ \ / _ \| |
     | |_) |  __/|  __/| | | (_) >  <| |_| |  __/ (_) | (_) | |
     |____/|_|   |_|   |_|  \___/_/\_\\__, |_|   \___/ \___/|_|
@@ -33,52 +33,50 @@ wget -N https://raw.githubusercontent.com/jungheil/bpproxypool/main/docker-compo
 git clone https://github.com/jungheil/bpproxypool.git bp_proxy_pool
 cd bp_proxy_pool
 pip3 install -r requirements.txt
+```
 
+自行运行 redis，并修改 `config.py`
+
+运行：
+
+```bash
 python3 bpproxypool.py launch
 ```
 
 ### Config
 
-可以通过添加环境变量（参数名全大写）或者修改文件`config.py`配置
+可以通过添加环境变量（参数名全大写）或者修改文件 `config.py`配置
 
 - 数据库配置
-
   | name         | description | remark |
   | ------------ | ----------- | ------ |
   | `db_conn`    | 数据库地址  |        |
   | `table_name` | 数据库表名  |        |
-
 - API 服务配置
-
   | name   | description  | remark |
   | ------ | ------------ | ------ |
   | `host` | API 监听地址 |        |
   | `port` | API 监听端口 |        |
-
 - 爬虫设置
-
-  | name                   | description      | remark                 |
-  | ---------------------- | ---------------- | ---------------------- |
-  | `fetchers`             | 代理获取源       | 见`fetcher/fetcher.py` |
-  | `val_http`             | http 验证地址    |                        |
-  | `val_https`            | https 验证地址   |                        |
-  | `val_timeout`          | 验证超时时间     |                        |
-  | `recheck_failed_count` | 失败容许次数     |                        |
-  | `min_pool_size`        | 代理池最小数量   |                        |
-  | `get_region`           | 是否获取代理地区 |                        |
-  | `verify`               | 是否验证 ssl     |                        |
-  | `fetch_protocol`       | 爬取协议         |                        |
-
+  | name                   | description      | remark                                                |
+  | ---------------------- | ---------------- | ----------------------------------------------------- |
+  | `fetchers`             | 代理获取源       | 见 `fetcher/fetcher.py`                               |
+  | `fetch_proxy`          | 爬虫代理         | 空则不使用                                            |
+  | `val_timeout`          | 验证超时时间     |                                                       |
+  | `recheck_failed_count` | 失败容许次数     |                                                       |
+  | `min_pool_size`        | 代理池最小数量   |                                                       |
+  | `get_ip_info`          | 是否获取代理地区 |                                                       |
+  | `val_sites`            | 用于验证的网站   | 环境变量方式 e. g.`httpbin=httpbin.org,bing=bing.com` |
+  | `fetch_protocol`       | 爬取协议         | 环境变量方式 e. g.`http,https`                        |
 - 调度器配置
-
-  | name                   | description          | remark                                        |
-  | ---------------------- | -------------------- | --------------------------------------------- |
-  | `timezone`             | 时区                 |                                               |
-  | `run_fetch_interval`   | 运行爬虫间隔时间     | 当代理池中代理数量大于`min_pool_size`不会运行 |
-  | `max_fetch_interval`   | 强制运行爬虫间隔时间 |                                               |
-  | `run_recheck_interval` | 验证代理池间隔时间   |                                               |
-  | `fetch_semaphore`      | 爬虫并行数量         |                                               |
-  | `recheck_semaphore`    | 验证代理池并行数量   |                                               |
+  | name                   | description          | remark                                         |
+  | ---------------------- | -------------------- | ---------------------------------------------- |
+  | `timezone`             | 时区                 |                                                |
+  | `run_fetch_interval`   | 运行爬虫间隔时间     | 当代理池中代理数量大于 `min_pool_size`不会运行 |
+  | `max_fetch_interval`   | 强制运行爬虫间隔时间 |                                                |
+  | `run_recheck_interval` | 验证代理池间隔时间   |                                                |
+  | `fetch_semaphore`      | 爬虫并行数量         |                                                |
+  | `recheck_semaphore`    | 验证代理池并行数量   |                                                |
 
 ### API
 
@@ -95,12 +93,12 @@ python3 bpproxypool.py launch
 
 - Fetcher
 
-  见`fetcher/fetcher`
+  见 `fetcher/fetcher`
 
 - Validator
 
-  见`helper/validator.py`
+  见 `helper/validator.py`
 
 ### Acknowledgment
 
-- <https://github.com/jhao104/proxy_pool>
+- [https://github.com/jhao104/proxy_pool](https://github.com/jhao104/proxy_pool)

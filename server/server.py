@@ -3,7 +3,7 @@ import platform
 from flask import Flask, jsonify, request
 from werkzeug.wrappers import Response
 
-from config import server_config
+from config import config
 from handler.db_handler import DBHandler
 from helper.proxy import Proxy
 
@@ -93,7 +93,7 @@ def get_count():
 
 def runFlask():
     if platform.system() == "Windows":
-        app.run(host=server_config["host"], port=server_config["port"])
+        app.run(host=config.server_config["host"], port=sconfig.erver_config["port"])
     else:
         import gunicorn.app.base
 
@@ -118,7 +118,7 @@ def runFlask():
                 return self.application
 
         _options = {
-            "bind": f"{server_config['host']}:{server_config['port']}",
+            "bind": f"{config.server_config['host']}:{config.server_config['port']}",
             "workers": 4,
             "accesslog": "log/server.log",
         }

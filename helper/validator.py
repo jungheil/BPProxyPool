@@ -1,119 +1,71 @@
-import re
+from collections import defaultdict
 
 from curl_cffi import requests
 
-from config import fetch_config
-from util.singleton import SingletonMeta
+from config import config
+from utils.singleton import SingletonMeta
+
+
+def get_headers_validator(url, ptc):
+    async def warpper_validator(addr):
+        proxies = {"http": f"{ptc}://{addr}", "https": f"{ptc}://{addr}"}
+        async with requests.AsyncSession() as session:
+            try:
+                r = await session.head(
+                    url,
+                    proxies=proxies,
+                    timeout=config.fetch_config["val_timeout"],
+                )
+                return True if r.status_code == 200 else False
+            except Exception:
+                return False
+
+    return warpper_validator
 
 
 class ValidatorRegistry(metaclass=SingletonMeta):
     def __init__(self) -> None:
         supported_protocol = set(["http", "https", "socks4", "socks5"])
-        if not set(fetch_config["fetch_protocol"]).issubset(supported_protocol):
+        if not set(config.fetch_config["fetch_protocol"]).issubset(supported_protocol):
             raise ValueError(f"fetch_protocol should be one of {supported_protocol}")
-        self._pre_validator = []
-        self._protocol_validator = {i: [] for i in fetch_config["fetch_protocol"]}
+        self._validators = defaultdict(dict)
+        self._add_base_validator()
 
     @property
-    def pre_validator(self):
-        return self._pre_validator
+    def validators(self):
+        return self._validators
 
-    @property
-    def protocol_validator(self):
-        return self._protocol_validator
+    def _add_base_validator(self):
+        for ptc in config.fetch_config["fetch_protocol"]:
+            for site_name, site_url in config.fetch_config["val_sites"].items():
+                if ptc == "http":
+                    url = f"http://{site_url}"
+                else:
+                    url = f"https://{site_url}"
+                if ptc == "https":
+                    pptc = "http"
+                else:
+                    pptc = ptc
+                validator = get_headers_validator(url, pptc)
+                self.add_validator(site_name, ptc)(validator)
 
-    def add_validator(self, val_type):
-        val_type = val_type.lower()
+    def add_validator(self, val_name, ptc, required=False):
+        ptc = ptc.lower()
+        if ptc not in config.fetch_config["fetch_protocol"]:
+
+            def ignore_warpper(func):
+                return func
+
+            return ignore_warpper
+        if val_name in self._validators[ptc].keys():
+            raise ValueError(f"validator {val_name} for protocol {ptc} already exists")
 
         def warpper(func):
-            if val_type == "pre":
-                self._pre_validator.append(func)
-            elif self._protocol_validator.get(val_type) is not None:
-                self._protocol_validator[val_type].append(func)
-            return func
+            async def validator(addr):
+                ret = await func(addr)
+                return (ret, val_name, required)
+
+            self._validators[ptc][val_name] = validator
+            return validator
 
         return warpper
-
-
-IP_REGEX = re.compile(
-    r"^((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])(?::(?:[0-9]|[1-9][0-9]{1,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))$"
-)
-
-
-@ValidatorRegistry().add_validator("pre")
-async def format_validator(addr):
-    """检查代理格式"""
-    return True if IP_REGEX.fullmatch(addr) else False
-
-
-@ValidatorRegistry().add_validator("http")
-async def http_timeout_validator(addr):
-    """http检测超时"""
-
-    proxies = {"http": f"http://{addr}"}
-    async with requests.AsyncSession() as session:
-        try:
-            r = await session.head(
-                fetch_config["val_http"],
-                proxies=proxies,
-                timeout=fetch_config["val_timeout"],
-                impersonate="chrome110",
-            )
-            return True if r.status_code == 200 else False
-        except Exception as e:
-            return False
-
-
-@ValidatorRegistry().add_validator("https")
-async def https_timeout_validator(addr):
-    """https检测超时"""
-
-    proxies = {"https": f"http://{addr}"}
-    async with requests.AsyncSession() as session:
-        try:
-            r = await session.head(
-                fetch_config["val_https"],
-                proxies=proxies,
-                timeout=fetch_config["val_timeout"],
-                verify=fetch_config["verify"],
-                impersonate="chrome110",
-            )
-            return True if r.status_code == 200 else False
-        except Exception as e:
-            return False
-
-
-@ValidatorRegistry().add_validator("socks4")
-async def socks4_timeout_validator(addr):
-    """socks4检测超时"""
-    proxies = {"https": f"socks4://{addr}"}
-    async with requests.AsyncSession() as session:
-        try:
-            r = await session.head(
-                fetch_config["val_https"],
-                proxies=proxies,
-                timeout=fetch_config["val_timeout"],
-                verify=fetch_config["verify"],
-                impersonate="chrome110",
-            )
-            return True if r.status_code == 200 else False
-        except Exception as e:
-            return False
-
-
-@ValidatorRegistry().add_validator("socks5")
-async def socks5_timeout_validator(addr):
-    """socks5检测超时"""
-    proxies = {"https": f"socks5://{addr}"}
-    async with requests.AsyncSession() as session:
-        try:
-            r = await session.head(
-                fetch_config["val_https"],
-                proxies=proxies,
-                timeout=fetch_config["val_timeout"],
-                verify=fetch_config["verify"],
-                impersonate="chrome110",
-            )
-            return True if r.status_code == 200 else False
-        except Exception as e:
-            return False

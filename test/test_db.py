@@ -9,9 +9,10 @@ class TestDB(unittest.TestCase):
     def test_redis(self):
         def check_proxy_equal(proxy1, proxy2):
             self.assertEqual(proxy1.addr, proxy2.addr)
-            self.assertListEqual(proxy1.protocol, proxy2.protocol)
+            self.assertDictEqual(proxy1.accessibility, proxy2.accessibility)
             self.assertEqual(proxy1.fail_count, proxy2.fail_count)
             self.assertEqual(proxy1.region, proxy2.region)
+            self.assertEqual(proxy1.asn, proxy2.asn)
             self.assertEqual(proxy1.anonymous, proxy2.anonymous)
             self.assertEqual(proxy1.source, proxy2.source)
             self.assertEqual(proxy1.check_count, proxy2.check_count)
@@ -22,9 +23,9 @@ class TestDB(unittest.TestCase):
         db.change_table("test_db")
         proxy_dict = {
             "addr": "192.168.16.1:6666",
-            "protocol": ["http", "https"],
+            "accessibility": {"http": {"test1": True}, "https": {"test1": True}},
             "fail_count": 6,
-            "region": "CN",
+            "region": "CN GD",
             "anonymous": "",
             "source": "test_source",
             "check_count": 1,
@@ -33,9 +34,10 @@ class TestDB(unittest.TestCase):
         }
         proxy = Proxy(
             addr=proxy_dict["addr"],
-            protocol=proxy_dict["protocol"],
+            accessibility=proxy_dict["accessibility"],
             fail_count=proxy_dict["fail_count"],
             region=proxy_dict["region"],
+            asn=proxy_dict["asn"],
             anonymous=proxy_dict["anonymous"],
             source=proxy_dict["source"],
             check_count=proxy_dict["check_count"],

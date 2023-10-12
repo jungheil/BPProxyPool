@@ -7,8 +7,9 @@ import execjs
 from curl_cffi import requests
 from lxml import etree
 
+from config import config
 from handler.logger import LogHandler
-from util.singleton import SingletonMeta
+from utils.singleton import SingletonMeta
 
 logger = LogHandler("fetcher")
 
@@ -42,6 +43,14 @@ class Fetcher:
         self.name = "Unknown"
         self.last_run_time = int(time.time())
         self.delay = 0
+        self.proxies = (
+            {
+                "http": config.fetch_config["fetch_proxy"],
+                "https": config.fetch_config["fetch_proxy"],
+            }
+            if len(config.fetch_config["fetch_proxy"])
+            else None
+        )
 
     async def init_fetcher(self):
         pass
@@ -116,6 +125,7 @@ class FCzdaye(Fetcher):
                 headers=headers,
                 timeout=10,
                 impersonate="chrome110",
+                proxies=self.proxies,
             )
             tree = etree.HTML(response.text)
             data = tree.xpath('//*[@id="ipc"]/tbody/tr')
@@ -149,7 +159,9 @@ class FCfkxdaili(Fetcher):
         except IndexError as e:
             raise StopAsyncIteration from e
         async with requests.AsyncSession() as session:
-            response = await session.get(url, timeout=10, impersonate="chrome110")
+            response = await session.get(
+                url, timeout=10, impersonate="chrome110", proxies=self.proxies
+            )
         tree = etree.HTML(response.text)
         ret = []
         for tr in tree.xpath("//table[@class='active']//tr")[1:]:
@@ -183,7 +195,9 @@ class FCfkuaidaili(Fetcher):
         except IndexError as e:
             raise StopAsyncIteration from e
         async with requests.AsyncSession() as session:
-            response = await session.get(url, timeout=10, impersonate="chrome110")
+            response = await session.get(
+                url, timeout=10, impersonate="chrome110", proxies=self.proxies
+            )
         tree = etree.HTML(response.text)
         proxy_list = tree.xpath(".//table//tr")
         ret = []
@@ -211,7 +225,9 @@ class FCfip3366(Fetcher):
         except IndexError as e:
             raise StopAsyncIteration from e
         async with requests.AsyncSession() as session:
-            response = await session.get(url, timeout=10, impersonate="chrome110")
+            response = await session.get(
+                url, timeout=10, impersonate="chrome110", proxies=self.proxies
+            )
             proxies = re.findall(
                 r"<td>(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})</td>[\s\S]*?<td>(\d+)</td>",
                 response.content.decode("utf-8", errors="ignore"),
@@ -240,7 +256,9 @@ class FCf89ip(Fetcher):
         except IndexError as e:
             raise StopAsyncIteration from e
         async with requests.AsyncSession() as session:
-            response = await session.get(url, timeout=10, impersonate="chrome110")
+            response = await session.get(
+                url, timeout=10, impersonate="chrome110", proxies=self.proxies
+            )
         proxies = re.findall(
             r"<td.*?>[\s\S]*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})[\s\S]*?</td>[\s\S]*?<td.*?>[\s\S]*?(\d+)[\s\S]*?</td>",
             response.text,
@@ -265,7 +283,9 @@ class FCdocip(Fetcher):
         except IndexError as e:
             raise StopAsyncIteration from e
         async with requests.AsyncSession() as session:
-            response = await session.get(url, timeout=10, impersonate="chrome110")
+            response = await session.get(
+                url, timeout=10, impersonate="chrome110", proxies=self.proxies
+            )
         ret = [i["ip"] for i in response.json()["data"]]
         return ret
 
@@ -284,7 +304,10 @@ class FCpzzqz(Fetcher):
         self.target_region = ["cn", "hk", "gb", "us", "sg"]
         async with requests.AsyncSession() as session:
             response = await session.get(
-                "https://pzzqz.com/", timeout=10, impersonate="chrome110", verify=False
+                "https://pzzqz.com/",
+                timeout=10,
+                impersonate="chrome110",
+                proxies=self.proxies,
             )
             x_csrf_token = re.findall('X-CSRFToken": "(.*?)"', response.text)
             self.cookies = session.cookies
@@ -310,6 +333,7 @@ class FCpzzqz(Fetcher):
                 impersonate="chrome110",
                 headers=self.headers,
                 cookies=self.cookies,
+                proxies=self.proxies,
             )
             tree = etree.HTML(response.text)
             ret = []
@@ -358,6 +382,7 @@ class FCgeonode(Fetcher):
                 headers=headers,
                 timeout=10,
                 impersonate="chrome110",
+                proxies=self.proxies,
             )
             data = response.json()["data"]
             ret = [f'{i["ip"]}:{i["port"]}' for i in data]
@@ -396,7 +421,11 @@ class FCfpcz(Fetcher):
 
         async with requests.AsyncSession() as session:
             response = await session.get(
-                url, timeout=10, impersonate="chrome110", headers=headers
+                url,
+                timeout=10,
+                impersonate="chrome110",
+                headers=headers,
+                proxies=self.proxies,
             )
         tree = etree.HTML(response.text)
         data = tree.xpath('//table[@id="proxy_list"]/tbody/tr')
@@ -441,7 +470,12 @@ class FCproxyscrape(Fetcher):
         }
         async with requests.AsyncSession() as session:
             response = await session.get(
-                url, params=params, timeout=10, impersonate="chrome110", headers=headers
+                url,
+                params=params,
+                timeout=10,
+                impersonate="chrome110",
+                headers=headers,
+                proxies=self.proxies,
             )
         ret = []
         for protocol in response.json().values():
@@ -481,7 +515,11 @@ class FCfplnet(Fetcher):
 
         async with requests.AsyncSession() as session:
             response = await session.get(
-                url, timeout=10, impersonate="chrome110", headers=headers
+                url,
+                timeout=10,
+                impersonate="chrome110",
+                headers=headers,
+                proxies=self.proxies,
             )
         tree = etree.HTML(response.text)
         data = tree.xpath('//*[@id="list"]/div/div[2]/div/table/tbody/tr')
@@ -526,7 +564,11 @@ class FChidemy(Fetcher):
 
         async with requests.AsyncSession() as session:
             response = await session.get(
-                url, timeout=10, impersonate="chrome110", headers=headers
+                url,
+                timeout=10,
+                impersonate="chrome110",
+                headers=headers,
+                proxies=self.proxies,
             )
         tree = etree.HTML(response.text)
         data = tree.xpath("/html/body/div[1]/div[4]/div/div[4]/table/tbody/tr")
@@ -574,7 +616,11 @@ class FCopenproxyspace(Fetcher):
         }
         async with requests.AsyncSession() as session:
             response = await session.get(
-                url, timeout=10, impersonate="chrome110", headers=headers
+                url,
+                timeout=10,
+                impersonate="chrome110",
+                headers=headers,
+                proxies=self.proxies,
             )
         data = response.json()["data"]
         ret = []
@@ -616,7 +662,11 @@ class FCproxynova(Fetcher):
         }
         async with requests.AsyncSession() as session:
             response = await session.get(
-                url, timeout=10, impersonate="chrome110", headers=headers
+                url,
+                timeout=10,
+                impersonate="chrome110",
+                headers=headers,
+                proxies=self.proxies,
             )
         tree = etree.HTML(response.text)
         data = tree.xpath('//table[@id="tbl_proxy_list"]/tbody/tr')
@@ -679,16 +729,28 @@ class FCspysone(Fetcher):
         }
 
         async with requests.AsyncSession() as session:
-            response = await session.get(url, timeout=10, impersonate="chrome110")
-            tree = etree.HTML(response.text)
-            data["xx0"] = tree.xpath('//input[@name="xx0"]/@value')[0]
-            response = await session.post(
-                url, data=data, timeout=10, impersonate="chrome110", headers=headers
+            response = await session.get(
+                url, timeout=10, impersonate="chrome110", proxies=self.proxies
             )
             tree = etree.HTML(response.text)
             data["xx0"] = tree.xpath('//input[@name="xx0"]/@value')[0]
             response = await session.post(
-                url, data=data, timeout=10, impersonate="chrome110", headers=headers
+                url,
+                data=data,
+                timeout=10,
+                impersonate="chrome110",
+                headers=headers,
+                proxies=self.proxies,
+            )
+            tree = etree.HTML(response.text)
+            data["xx0"] = tree.xpath('//input[@name="xx0"]/@value')[0]
+            response = await session.post(
+                url,
+                data=data,
+                timeout=10,
+                impersonate="chrome110",
+                headers=headers,
+                proxies=self.proxies,
             )
             tree = etree.HTML(response.text)
             env_script = tree.xpath("/html/body/script/text()")[0]
@@ -729,6 +791,7 @@ class FCpldl(Fetcher):
                 params={"type": protocol},
                 timeout=10,
                 impersonate="chrome110",
+                proxies=self.proxies,
             )
         data = response.text
         ret = data.split("\r\n")[:-1]
@@ -747,7 +810,10 @@ class FCxsdaili(Fetcher):
     async def init_fetcher(self):
         async with requests.AsyncSession() as session:
             response = await session.get(
-                "https://www.xsdaili.cn/", timeout=10, impersonate="chrome110"
+                "https://www.xsdaili.cn/",
+                timeout=10,
+                impersonate="chrome110",
+                proxies=self.proxies,
             )
             tree = etree.HTML(response.text)
             data = tree.xpath('//div[@class="col-md-12"]/div/div/a/@href')
@@ -761,7 +827,9 @@ class FCxsdaili(Fetcher):
         except IndexError as e:
             raise StopAsyncIteration from e
         async with requests.AsyncSession() as session:
-            response = await session.get(url, timeout=10, impersonate="chrome110")
+            response = await session.get(
+                url, timeout=10, impersonate="chrome110", proxies=self.proxies
+            )
         tree = etree.HTML(response.text)
         data = tree.xpath('//div[@class="col-md-12"]/div[@class="cont"]/text()')
         ret = [i.strip().split("@")[0] for i in data]
@@ -807,6 +875,7 @@ class FCplorg(Fetcher):
                 headers=headers,
                 timeout=10,
                 impersonate="chrome110",
+                proxies=self.proxies,
             )
             tree = etree.HTML(response.text)
             data = tree.xpath(

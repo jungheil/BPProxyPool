@@ -1,76 +1,73 @@
 import asyncio
 import unittest
 
-from config import fetch_config
-from helper import checker, validator
+from config import config
+from helper.checker import do_validator
 from helper.proxy import Proxy
+from helper.validator import ValidatorRegistry, get_headers_validator
 
 
 class TestValidator(unittest.TestCase):
     def test_fetch_protocol(self):
-        fetch_config["fetch_protocol"] = ["http", "socks5"]
+        config._fetch_config["val_sites"] = {}
+        config._fetch_config["fetch_protocol"] = ["http", "socks5"]
 
-        validator.ValidatorRegistry.clear_instances()
-        proxy_validator = validator.ValidatorRegistry()
+        ValidatorRegistry.clear_instances()
+        proxy_validator = ValidatorRegistry()
 
-        protocol = proxy_validator._protocol_validator.keys()
-        self.assertListEqual(list(protocol), ["http", "socks5"])
-
-        @proxy_validator.add_validator("http")
+        @proxy_validator.add_validator("test_http", "http")
         def test_http_validator(proxy):
             pass
 
-        @proxy_validator.add_validator("socks4")
+        @proxy_validator.add_validator("test_socks4", "socks4")
         def test_socks4_validator(proxy):
             pass
 
-        self.assertDictEqual(
-            proxy_validator._protocol_validator,
-            {
-                "http": [test_http_validator],
-                "socks5": [],
-            },
-        )
-
-    def test_pre_validator(self):
-        validator.ValidatorRegistry.clear_instances()
-        proxy_validator = validator.ValidatorRegistry()
-
-        @proxy_validator.add_validator("pre")
-        def test_pre_validator(proxy):
+        @proxy_validator.add_validator("test_socks5", "socks5")
+        def test_socks5_validator(proxy):
             pass
 
-        self.assertListEqual(
-            proxy_validator._pre_validator,
-            [test_pre_validator],
+        protocol = proxy_validator.validators.keys()
+        self.assertListEqual(list(protocol), ["http", "socks5"])
+
+        self.assertDictEqual(
+            proxy_validator.validators["http"],
+            {"test_http": test_http_validator},
+        )
+        self.assertDictEqual(
+            proxy_validator.validators["socks4"],
+            {},
         )
 
     def test_undefined_protocol(self):
-        fetch_config["fetch_protocol"] = ["https", "socks5", "undefined"]
+        config._fetch_config["fetch_protocol"] = ["https", "socks5", "undefined"]
 
-        validator.ValidatorRegistry.clear_instances()
+        ValidatorRegistry.clear_instances()
 
         with self.assertRaises(ValueError):
-            validator.ValidatorRegistry()
+            ValidatorRegistry()
 
-        fetch_config["fetch_protocol"] = ["https", "socks5"]
-        validator.ValidatorRegistry.clear_instances()
+        config._fetch_config["fetch_protocol"] = ["https", "socks5"]
+        ValidatorRegistry.clear_instances()
 
 
 class TestCheck(unittest.TestCase):
     def test_do_validator(self):
-        fetch_config["fetch_protocol"] = ["http", "https", "socks4", "socks5"]
+        config._fetch_config["fetch_protocol"] = ["http", "https", "socks4", "socks5"]
 
-        validator.ValidatorRegistry.clear_instances()
-        proxy_checker = validator.ValidatorRegistry()
+        ValidatorRegistry.clear_instances()
+        vr = ValidatorRegistry()
 
-        proxy_checker.add_validator("pre")(validator.format_validator)
-        proxy_checker.add_validator("http")(validator.http_timeout_validator)
-        proxy_checker.add_validator("https")(validator.https_timeout_validator)
-        proxy_checker.add_validator("socks4")(validator.socks4_timeout_validator)
-        proxy_checker.add_validator("socks5")(validator.socks5_timeout_validator)
+        validator = get_headers_validator("www.httpbin.org", "http")
+        vr.add_validator("http_test", "http")(validator)
+        validator = get_headers_validator("www.httpbin.org", "https")
+        vr.add_validator("https_test", "https")(validator)
+        validator = get_headers_validator("www.httpbin.org", "socks4")
+        vr.add_validator("socks4_test", "socks4")(validator)
+        validator = get_headers_validator("www.httpbin.org", "socks5")
+        vr.add_validator("socks5_test", "socks5")(validator)
 
         proxy = Proxy("127.0.0.1:8888")
 
         sem = asyncio.Semaphore(1)
-        asyncio.run(checker.do_validator(proxy, True, sem))
+        asyncio.run(do_validator(proxy, True, sem))

@@ -2,11 +2,12 @@ import os
 import sys
 from urllib.parse import urlparse
 
-from util.singleton import SingletonMeta
+from utils.singleton import SingletonMeta
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-class DbClient(metaclass=SingletonMeta):  
+
+class DbClient(metaclass=SingletonMeta):
     def __init__(self, db_conn):
         self.parse_db_conn(db_conn)
         self.__init_db_client()

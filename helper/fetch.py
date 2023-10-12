@@ -1,6 +1,6 @@
 import asyncio
 
-from config import fetch_config
+from config import config
 from fetcher import FetcherRegistry
 from handler.logger import LogHandler
 from helper.checker import proxy_checker
@@ -32,6 +32,6 @@ async def run_single_fetch(fetcher_name, sem):
 
 
 async def run_fetch(sem):
-    task = [run_single_fetch(i, sem) for i in fetch_config["fetchers"]]
+    task = [run_single_fetch(i, sem) for i in config.fetch_config["fetchers"]]
     fut = asyncio.gather(*task)
     await fut

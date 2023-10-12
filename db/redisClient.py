@@ -37,7 +37,9 @@ class RedisClient(object):
             proxies = list(
                 filter(
                     lambda x: len(
-                        set(protocol).intersection(set(json.loads(x).get("protocol")))
+                        set(protocol).intersection(
+                            set(json.loads(x).get("accessibility").keys())
+                        )
                     )
                     > 0,
                     items,
@@ -74,7 +76,9 @@ class RedisClient(object):
             return list(
                 filter(
                     lambda x: len(
-                        set(protocol).intersection(set(json.loads(x).get("protocol")))
+                        set(protocol).intersection(
+                            set(json.loads(x).get("accessibility").keys())
+                        )
                     )
                     > 0,
                     items,
@@ -92,7 +96,7 @@ class RedisClient(object):
         source_dict = defaultdict(int)
         for proxy in proxies:
             proxy = json.loads(proxy)
-            for ptc in proxy["protocol"]:
+            for ptc in proxy["accessibility"].keys():
                 protocol_dict[ptc] += 1
                 source_dict[proxy["source"]] += 1
         return {"protocol": protocol_dict, "source": source_dict, "count": len(proxies)}

@@ -1,13 +1,13 @@
 import click
 
-from config import common_config, get_env
+from config import config
 from helper.launcher import start_all, start_scheduler, start_server
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.version_option(version=common_config["version"])
+@click.version_option(version=config.common_config["version"])
 def cli():
     """ProxyPool cli工具"""
 
@@ -26,10 +26,9 @@ def server():
 
 @cli.command(name="launch")
 def launch():
-    click.echo(common_config["banner"])
+    click.echo(config)
     start_all()
 
 
 if __name__ == "__main__":
-    get_env()
     cli()

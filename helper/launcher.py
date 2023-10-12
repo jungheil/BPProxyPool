@@ -1,7 +1,7 @@
 import multiprocessing
 import sys
 
-from config import db_config
+from config import config
 from db.dbClient import DbClient
 from handler.logger import LogHandler
 
@@ -17,9 +17,9 @@ def start_server():
 
 def start_scheduler():
     _before_start()
-    from helper.scheduler import runScheduler
+    from helper.scheduler import RunScheduler
 
-    runScheduler()
+    RunScheduler()
 
 
 def _before_start():
@@ -40,5 +40,5 @@ def start_all():
 
 
 def _check_db():
-    db = DbClient(db_config["db_conn"])
+    db = DbClient(config.db_config["db_conn"])
     return db.test()

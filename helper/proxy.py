@@ -10,9 +10,10 @@ class Proxy(object):
     def __init__(
         self,
         addr,
-        protocol=[],
+        accessibility={},
         fail_count=0,
         region="",
+        asn="",
         anonymous="",
         source="",
         check_count=0,
@@ -20,9 +21,10 @@ class Proxy(object):
         last_time="",
     ):
         assert self._check_addr(addr), "addr error"
-        assert isinstance(protocol, list), "protocol error"
+        assert isinstance(accessibility, dict), "accessibility error"
         assert isinstance(fail_count, int), "fail_count error"
         assert isinstance(region, str), "region error"
+        assert isinstance(asn, str), "asn error"
         assert isinstance(anonymous, str), "anonymous error"
         assert isinstance(source, str), "source error"
         assert isinstance(check_count, int), "check_count error"
@@ -30,9 +32,10 @@ class Proxy(object):
         assert isinstance(last_time, str), "last_time error"
 
         self._addr = addr
-        self._protocol = protocol
+        self._accessibility = accessibility
         self._fail_count = fail_count
         self._region = region
+        self._asn = asn
         self._anonymous = anonymous
         self._source = source
         self._check_count = check_count
@@ -48,9 +51,10 @@ class Proxy(object):
         _dict = json.loads(proxy_json)
         return cls(
             addr=_dict.get("addr", ""),
-            protocol=_dict.get("protocol", []),
+            accessibility=_dict.get("accessibility", {}),
             fail_count=_dict.get("fail_count", 0),
             region=_dict.get("region", ""),
+            asn=_dict.get("asn", ""),
             anonymous=_dict.get("anonymous", ""),
             source=_dict.get("source", ""),
             check_count=_dict.get("check_count", 0),
@@ -72,6 +76,11 @@ class Proxy(object):
     def region(self):
         """地理位置(国家/城市)"""
         return self._region
+
+    @property
+    def asn(self):
+        """asn"""
+        return self._asn
 
     @property
     def anonymous(self):
@@ -99,18 +108,19 @@ class Proxy(object):
         return self._last_time
 
     @property
-    def protocol(self):
-        """支持的协议"""
-        return self._protocol
+    def accessibility(self):
+        """支持协议连接性"""
+        return self._accessibility
 
     @property
     def to_dict(self):
         """属性字典"""
         return {
             "addr": self.addr,
-            "protocol": self.protocol,
+            "accessibility": self.accessibility,
             "fail_count": self.fail_count,
             "region": self.region,
+            "asn": self.asn,
             "anonymous": self.anonymous,
             "source": self.source,
             "check_count": self.check_count,
@@ -139,10 +149,14 @@ class Proxy(object):
     def last_time(self, value):
         self._last_time = value
 
-    @protocol.setter
-    def protocol(self, value):
-        self._protocol = value
+    @accessibility.setter
+    def accessibility(self, value):
+        self._accessibility = value
 
     @region.setter
     def region(self, value):
         self._region = value
+
+    @asn.setter
+    def asn(self, value):
+        self._asn = value
