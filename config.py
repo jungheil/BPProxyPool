@@ -40,6 +40,8 @@ fetch_config = {
         "pldl",
         "xsdaili",
         "plorg",
+        "freeproxyupdate",
+        "rotatingproxies",
     ],
     "fetch_proxy": "",
     "val_timeout": 5,

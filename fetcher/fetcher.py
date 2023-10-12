@@ -301,7 +301,23 @@ class FCpzzqz(Fetcher):
         self.headers = None
 
     async def init_fetcher(self):
-        self.target_region = ["cn", "hk", "gb", "us", "sg"]
+        self.target_region = [
+            "cn",
+            "hk",
+            "gb",
+            "us",
+            "sg",
+            "ar",
+            "au",
+            "br",
+            "id",
+            "in",
+            "ru",
+            "th",
+            "ua",
+            "za",
+            "kr",
+        ]
         async with requests.AsyncSession() as session:
             response = await session.get(
                 "https://pzzqz.com/",
@@ -638,13 +654,9 @@ class FCproxynova(Fetcher):
         self.target_urls = []
 
     async def init_fetcher(self):
-        self.target_urls = [
-            "https://www.proxynova.com/proxy-server-list/country-cn/",
-            "https://www.proxynova.com/proxy-server-list/country-ru/",
-            "https://www.proxynova.com/proxy-server-list/country-id/",
-            "https://www.proxynova.com/proxy-server-list/country-co/",
-            "https://www.proxynova.com/proxy-server-list/country-ar/",
-        ]
+        region = ["cn", "ru", "id", "co", "ar", "us", "br", "de", "ua", "th"]
+        target_url = "https://www.proxynova.com/proxy-server-list/country-{}/"
+        self.target_urls = [target_url.format(i) for i in region]
 
     async def fetcher(self):
         try:
@@ -882,6 +894,94 @@ class FCplorg(Fetcher):
                 '//*[@id="proxy-table"]/div[2]/div/ul/li[1]/script/text()'
             )
             ret = [base64.b64decode(i[7:-2]).decode() for i in data]
+        return ret
+
+
+@FetcherRegistry().register("freeproxyupdate")
+class FCfreeproxyupdate(Fetcher):
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "freeproxyupdate"
+        self.delay = 2
+        self.target_urls = []
+
+    async def init_fetcher(self):
+        self.target_urls = [
+            "https://freeproxyupdate.com/http-proxy",
+            "https://freeproxyupdate.com/https-ssl-proxy",
+            "https://freeproxyupdate.com/socks4-proxy",
+            "https://freeproxyupdate.com/socks5-proxy",
+        ]
+
+    async def fetcher(self):
+        try:
+            url = self.target_urls.pop()
+        except IndexError as e:
+            raise StopAsyncIteration from e
+        async with requests.AsyncSession() as session:
+            response = await session.get(
+                url,
+                timeout=10,
+                impersonate="chrome110",
+                proxies=self.proxies,
+            )
+        tree = etree.HTML(response.text)
+        data = tree.xpath('//*[@id="main-content"]/table/tbody/tr')
+        ret = []
+        for i in data:
+            try:
+                ip = i.xpath("./td[1]/text()")[0]
+                port = i.xpath("./td[2]/text()")[0]
+                ret.append(f"{ip}:{port}")
+            except Exception:
+                continue
+        return ret
+
+
+@FetcherRegistry().register("rotatingproxies")
+class FCrotatingproxies(Fetcher):
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "rotatingproxies"
+        self.target_urls = []
+
+    async def init_fetcher(self):
+        self.target_urls = ["https://rotatingproxies.com/free/get-proxies.php"]
+
+    async def fetcher(self):
+        try:
+            url = self.target_urls.pop()
+        except IndexError as e:
+            raise StopAsyncIteration from e
+        headers = {
+            "DNT": "1",
+            "sec-ch-ua-mobile": "?0",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Referer": "https://rotatingproxies.com/free/",
+            "X-Requested-With": "XMLHttpRequest",
+        }
+
+        params = {
+            "proxy_anonymity": "all",
+            "proxy_protocol": "all",
+            "proxy_location": "WW",
+        }
+
+        async with requests.AsyncSession() as session:
+            response = await session.get(
+                url,
+                params=params,
+                headers=headers,
+                timeout=10,
+                impersonate="chrome110",
+                proxies=self.proxies,
+            )
+        ret = []
+        for i in response.json().values():
+            try:
+                ret.append(f"{i['ip']}:{i['port']}")
+            except Exception:
+                continue
         return ret
 
 
